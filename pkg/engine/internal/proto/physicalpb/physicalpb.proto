@@ -106,7 +106,11 @@ message IndexFilter {
   repeated string source_index_paths = 4;
 }
 
-// DeletionSweep applies delete requests to the objects of one tenant.
+// DeletionSweep finds the objects of one tenant that no ToC can reach.
 message DeletionSweep {
   string tenant = 1;
+  // delete makes the sweep delete its deletion candidates. If it is false,
+  // the sweep only logs them. A planner that does not know the field sends
+  // false, so an older planner gets a dry run.
+  bool delete = 2;
 }
