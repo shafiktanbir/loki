@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.0.0-rc.5](https://github.com/grafana/loki/compare/v4.0.0-rc.4...v4.0.0-rc.5) (2026-11-24)
+
+
+### Bug Fixes
+
+* **pattern:** Drain aggregation Push buffer on Stop [release-4.0.0] ([#26673](https://github.com/grafana/loki/issues/26673)) ([30be792](https://github.com/grafana/loki/commit/30be792da07ce295d3ebd2152bca51a7c264a1de))
+* **pattern:** Retry 429 and 5xx pushes and drop other client errors [release-4.0.0] ([#26672](https://github.com/grafana/loki/issues/26672)) ([541f049](https://github.com/grafana/loki/commit/541f049f3e7356b978e7b1848ea1a981da9b5d7a))
+* **querier:** Reconnect query workers without backoff after a canceled query [release-4.0.0] ([#26666](https://github.com/grafana/loki/issues/26666)) ([b40d394](https://github.com/grafana/loki/commit/b40d3940ec92025f72b56cd210b2b64624b1ebb0))
+
 ## [4.0.0-rc.4](https://github.com/grafana/loki/compare/v4.0.0-rc.3...v4.0.0-rc.4) (2026-11-20)
 
 
