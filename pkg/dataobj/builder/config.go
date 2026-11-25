@@ -81,6 +81,7 @@ func (cfg *Config) RegisterFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	_ = cfg.IndexobjBuilder.BufferSize.Set("128MB")
 	_ = cfg.IndexobjBuilder.TargetSectionSize.Set("512MB") // uncompressed
 	cfg.IndexobjBuilder.RegisterFlagsWithPrefix(prefix+"indexobj-builder.", f)
+	cfg.IndexobjBuilder.RegisterBloomDenyListFlag(prefix+"indexobj-builder.", f)
 	// BuilderBaseConfig registers the estimated compression ratio with a fixed
 	// default, so override it for index objects after registration.
 	cfg.IndexobjBuilder.EstimatedCompressionRatio = 1

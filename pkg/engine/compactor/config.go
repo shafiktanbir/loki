@@ -318,6 +318,7 @@ func (cfg *Config) RegisterFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	_ = cfg.IndexobjBuilder.TargetSectionSize.Set("512MB")
 	_ = cfg.IndexobjBuilder.BufferSize.Set("128MB")
 	cfg.IndexobjBuilder.RegisterFlagsWithPrefix(prefix+"indexobj-builder.", f)
+	cfg.IndexobjBuilder.RegisterBloomDenyListFlag(prefix+"indexobj-builder.", f)
 
 	// These flags do not have defaults in the flagset so default values must be Set before registering
 	// the flags to be documented correctly.

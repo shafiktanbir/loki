@@ -41,6 +41,10 @@ type MergeBuilder struct {
 	layout   streams.Layout
 	postings *postings.MergeBuilder
 
+	// bloomDenyList holds the names of the columns whose bloom filters the
+	// builder replaces with a filter that matches every value.
+	bloomDenyList map[string]struct{}
+
 	// wroteStats is true once the builder appended a stats section to the
 	// object it builds.
 	wroteStats bool
@@ -78,6 +82,8 @@ func NewMergeBuilder(cfg logsobj.BuilderBaseConfig, scratchStore scratch.Store, 
 		stats:    statsBuilder,
 		layout:   layout,
 		postings: postingsBuilder,
+
+		bloomDenyList: bloomDenySet(cfg.BloomDenyList),
 	}, nil
 }
 
@@ -162,10 +168,18 @@ func (b *MergeBuilder) AppendPostingsLabelEntry(tenantID string, entry postings.
 
 // AppendPostingsBloomEntry appends an aggregated bloom posting entry
 // directly to the builder.
+//
+// If the column of the entry is on the bloom deny list, the builder replaces
+// the bloom filter of the entry with the filter that matches every value. An
+// entry with a real filter from an older index then loses its filter, and the
+// reader never prunes the section on that column.
 func (b *MergeBuilder) AppendPostingsBloomEntry(tenantID string, entry postings.BloomEntry) error {
 	b.metrics.appendsTotal.Inc()
 	if err := b.checkTenant(tenantID); err != nil {
 		return err
+	}
+	if _, denied := b.bloomDenyList[entry.ColumnName]; denied {
+		entry.BloomFilter = postings.PassAllBloomFilter()
 	}
 
 	tenantPostings := b.postings

@@ -1028,6 +1028,8 @@ dataobj:
       # CLI flag: -dataobj.builder.logsobj-builder.estimated-compression-ratio
       [estimated_compression_ratio: <int> | default = 8]
 
+      [bloom_deny_list: <string> | default = ""]
+
     indexobj_builder:
       # The target maximum amount of uncompressed data to hold in data pages
       # (for columnar sections). Uncompressed size is used for consistent I/O
@@ -1066,6 +1068,14 @@ dataobj:
       # ordered append. Set to either 0 or 1 to disable.
       # CLI flag: -dataobj.builder.indexobj-builder.estimated-compression-ratio
       [estimated_compression_ratio: <int> | default = 1]
+
+      # Comma-separated names of structured metadata columns that get no bloom
+      # filter in the index. The index stores a filter that matches every value
+      # for each of them, so queries never skip data on these columns and stay
+      # correct. Use it for columns with unique values on every line, such as
+      # timestamps.
+      # CLI flag: -dataobj.builder.indexobj-builder.bloom-deny-list
+      [bloom_deny_list: <string> | default = "observed_timestamp"]
 
     # The maximum amount of time to wait in seconds before flushing an object
     # that is no longer receiving new writes.
@@ -1411,6 +1421,14 @@ dataobj:
       # CLI flag: -dataobj.compaction.indexobj-builder.estimated-compression-ratio
       [estimated_compression_ratio: <int> | default = 8]
 
+      # Comma-separated names of structured metadata columns that get no bloom
+      # filter in the index. The index stores a filter that matches every value
+      # for each of them, so queries never skip data on these columns and stay
+      # correct. Use it for columns with unique values on every line, such as
+      # timestamps.
+      # CLI flag: -dataobj.compaction.indexobj-builder.bloom-deny-list
+      [bloom_deny_list: <string> | default = "observed_timestamp"]
+
     logsobj_builder:
       # The target maximum amount of uncompressed data to hold in data pages
       # (for columnar sections). Uncompressed size is used for consistent I/O
@@ -1449,6 +1467,8 @@ dataobj:
       # ordered append. Set to either 0 or 1 to disable.
       # CLI flag: -dataobj.compaction.logsobj-builder.estimated-compression-ratio
       [estimated_compression_ratio: <int> | default = 8]
+
+      [bloom_deny_list: <string> | default = ""]
 
   # The prefix to use for the storage bucket.
   # CLI flag: -dataobj-storage-bucket-prefix

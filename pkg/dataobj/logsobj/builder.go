@@ -80,6 +80,11 @@ type BuilderBaseConfig struct {
 	// full, producing larger objects. Set to either 0 or 1 to disable.
 	EstimatedCompressionRatio int `yaml:"estimated_compression_ratio"`
 
+	// BloomDenyList names the structured metadata columns whose bloom filters
+	// an index builder replaces with a filter that matches every value. Only
+	// the index builders use it. The zero value denies no column.
+	BloomDenyList flagext.StringSliceCSV `yaml:"bloom_deny_list"`
+
 	// SortParallelism is the maximum number of goroutines that sort the logs in
 	// FlushAndSort. A value of 1 or less sorts the stream ranges one at a time.
 	SortParallelism int `yaml:"-"`
@@ -99,6 +104,16 @@ func (cfg *BuilderBaseConfig) RegisterFlagsWithPrefix(prefix string, f *flag.Fla
 	f.Var(&cfg.BufferSize, prefix+"buffer-size", "The size of logs to buffer in memory before adding into columnar builders, used to reduce CPU load of sorting.")
 	f.IntVar(&cfg.SectionStripeMergeLimit, prefix+"section-stripe-merge-limit", 2, "The maximum number of dataobj section stripes to merge into a section at once. Must be greater than 1.")
 	f.IntVar(&cfg.EstimatedCompressionRatio, prefix+"estimated-compression-ratio", 8, "Expected compression ratio for log data, used to estimate compressed output size from uncompressed buffered records. Only takes effect with ordered append. Set to either 0 or 1 to disable.")
+}
+
+// DefaultBloomDenyList is the default value of the index builder bloom deny list.
+const DefaultBloomDenyList = "observed_timestamp"
+
+// RegisterBloomDenyListFlag registers the flag for the bloom deny list of an
+// index builder. The flag has the default [DefaultBloomDenyList].
+func (cfg *BuilderBaseConfig) RegisterBloomDenyListFlag(prefix string, f *flag.FlagSet) {
+	_ = cfg.BloomDenyList.Set(DefaultBloomDenyList)
+	f.Var(&cfg.BloomDenyList, prefix+"bloom-deny-list", "Comma-separated names of structured metadata columns that get no bloom filter in the index. The index stores a filter that matches every value for each of them, so queries never skip data on these columns and stay correct. Use it for columns with unique values on every line, such as timestamps.")
 }
 
 // Validate validates the BuilderBaseConfig.

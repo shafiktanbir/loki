@@ -51,6 +51,10 @@ type Builder struct {
 	postings      *postings.Builder
 	watermarks    *watermarks.Builder
 
+	// bloomDenyList holds the names of the columns that get a filter that
+	// matches every value.
+	bloomDenyList map[string]struct{}
+
 	state builderState
 }
 
@@ -79,6 +83,8 @@ func NewBuilder(tenant string, cfg logsobj.BuilderBaseConfig, scratchStore scrat
 		tenant:  tenant,
 		cfg:     cfg,
 		metrics: metrics,
+
+		bloomDenyList: bloomDenySet(cfg.BloomDenyList),
 
 		// The watermarks section comes first so that a reader finds it in its first request.
 		builder: dataobj.NewBuilder(scratchStore, dataobj.WithPrioritySections(watermarks.SectionType())),
@@ -188,7 +194,18 @@ func (b *Builder) ObserveLabelPosting(obs postings.LabelObservation) {
 	b.state = builderStateDirty
 }
 
+// bloomDenySet returns the set of the names in list.
+func bloomDenySet(list []string) map[string]struct{} {
+	set := make(map[string]struct{}, len(list))
+	for _, name := range list {
+		set[name] = struct{}{}
+	}
+	return set
+}
+
 // PrepareBloomColumn initializes the bloom filter for a specific column.
+// A column on the bloom deny list gets a filter that matches every value, and
+// the builder does not add its values to a filter.
 // Must be called before any ObserveBloomPosting calls for the given (objectPath, sectionIdx, columnName).
 // shardBuckets is stored on the entry immediately so a prepared-but-unobserved
 // column still records the object's shard factor.
@@ -199,7 +216,11 @@ func (b *Builder) PrepareBloomColumn(
 	estimatedCardinality uint,
 	shardBuckets int64,
 ) {
-	b.getPostingsBuilder().PrepareBloomColumn(objectPath, sectionIdx, columnName, estimatedCardinality, shardBuckets)
+	if _, denied := b.bloomDenyList[columnName]; denied {
+		b.getPostingsBuilder().PreparePassAllBloomColumn(objectPath, sectionIdx, columnName, shardBuckets)
+	} else {
+		b.getPostingsBuilder().PrepareBloomColumn(objectPath, sectionIdx, columnName, estimatedCardinality, shardBuckets)
+	}
 
 	// The prepared column gives a bloom posting even without observations, so
 	// the builder has data to flush.
